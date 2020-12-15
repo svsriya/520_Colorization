@@ -7,6 +7,12 @@ import numpy as np
 # given the original image and the new image, calculates the differences
 # between the original pixel's color and the new pixel's color
 def pix_diff(og_img, new_img):
-    diff = np.absolute(np.subtract(og_img, new_img))
-    vect_sum = np.sum(diff, axis=(0,1))
-    return np.true_divide(vect_sum, len(new_img)*len(new_img[0]))
+
+    vect_sum = 0.0
+    for r in range(len(new_img)):
+        for c in range(len(new_img[0])):
+            og = og_img[r][c]
+            nw = new_img[r][c]
+            diff = (np.subtract(og, nw))
+            vect_sum += np.dot(diff,diff)
+    return float(vect_sum/(len(new_img)*len(new_img[0])))

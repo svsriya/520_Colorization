@@ -209,7 +209,10 @@ if __name__ == '__main__':
                 for i in range(1,n):
                     print("n = " + str(i))
                     b_img = basic_agent(img, k, i)
-                    print("Average difference: " + str(an.pix_diff(img, b_img)))
+                    # compare with just the right half
+                    _, right_img = np.hsplit(img, 2)
+                    _, right_new = np.hsplit(b_img, 2)
+                    print("Mean square error: " + str(an.pix_diff(right_img, right_new)))
             else:
                 k = int(input("Enter the number of representative colors: "))
                 n = int(input("Enter the number of nearest neighbors: "))
@@ -217,15 +220,19 @@ if __name__ == '__main__':
                 b_img = basic_agent(img, k, n)
                 end = time.perf_counter()
                 print(f"Elapsed Time: {end - start:0.2f} seconds")
-                print("Average difference: " + str(an.pix_diff(img, b_img)))
+                # compare with just the right half
+                _, right_img = np.hsplit(img, 2)
+                _, right_new = np.hsplit(b_img, 2)
+                print("Mean square error: " + str(an.pix_diff(right_img, right_new)))
             pyplot.show()
         if cmd is "I":
             a = float(input("Enter a step size (alpha): "))
             e = int(input("Enter the number of times to go through training data (epoch): "))
             start = time.perf_counter()
-            improved_agent(img, a, e)
+            i_img = improved_agent(img, a, e)
             end = time.perf_counter()
             print(f"Elapsed Time: {end - start:0.2f} seconds")
-            #print("Average difference: " + str(an.pix_diff(img, b_img)))
+            print("Mean square error: " + str(an.pix_diff(img, i_img)))
             pyplot.show()
-        cmd = input("\nEnter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(E)xit\n")
+
+        cmd = input("\nEnter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(C)ompare both\n(E)xit\n")

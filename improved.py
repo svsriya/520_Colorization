@@ -15,39 +15,39 @@ def grayscale(img):
 
 ############################# Improved Agent ##################################
 
-## used in linear regression
-def grad_descent(data, actual, epoch, alpha, in_dim, out_dim):
-    # initialize weight vector close to the zero vector (1x3)
-    w = np.array([uniform(0,0.01) for _ in range(in_dim[1])])
-    w[0] = w[0] * 5
-    # run the training through the data set epoch number of times
-    for _ in range(epoch):
-        mid = int(in_dim[0]/2)
-        # choose random index
-        r = randint(mid, len(data)-mid-1)
-        c = randint(mid, len(data[0])-mid-1)
-        print("(r,c) = " + str((r,c)))
-        print("w = " + str(w))
-        # get the X matrix of gray values
-        X = data[np.ix_(list(range(r-mid,r+mid+1)),list(range(c-mid,c+mid+1)))]
-        # compute the predicted color for l_img[r][c]
-        pred = np.matmul(w, X)
-        act = actual[r][c]
-        print("pred = " + str(pred))
-        print("act = " + str(act))
-        # compute the loss
-        mse = ((pred-act)**2).mean(axis=0)
-        print("MSE: " + str(mse))
-        # compute the partial difference
-        partial = 0
-        for i in range(len(pred)):
-            column = np.sum(X[:,i])
-            partial += (column*(pred[i]-act[i]))
-        partial *= (2/float(len(pred)))
-        #print("Partial = " + str(partial))
-        # compute new weight vector
-        w = w-(alpha*partial)
-    return w
+# ## used in linear regression, which ended up not working and was thus not used
+# def grad_descent(data, actual, epoch, alpha, in_dim, out_dim):
+#     # initialize weight vector close to the zero vector (1x3)
+#     w = np.array([uniform(0,0.01) for _ in range(in_dim[1])])
+#     w[0] = w[0] * 5
+#     # run the training through the data set epoch number of times
+#     for _ in range(epoch):
+#         mid = int(in_dim[0]/2)
+#         # choose random index
+#         r = randint(mid, len(data)-mid-1)
+#         c = randint(mid, len(data[0])-mid-1)
+#         print("(r,c) = " + str((r,c)))
+#         print("w = " + str(w))
+#         # get the X matrix of gray values
+#         X = data[np.ix_(list(range(r-mid,r+mid+1)),list(range(c-mid,c+mid+1)))]
+#         # compute the predicted color for l_img[r][c]
+#         pred = np.matmul(w, X)
+#         act = actual[r][c]
+#         print("pred = " + str(pred))
+#         print("act = " + str(act))
+#         # compute the loss
+#         mse = ((pred-act)**2).mean(axis=0)
+#         print("MSE: " + str(mse))
+#         # compute the partial difference
+#         partial = 0
+#         for i in range(len(pred)):
+#             column = np.sum(X[:,i])
+#             partial += (column*(pred[i]-act[i]))
+#         partial *= (2/float(len(pred)))
+#         #print("Partial = " + str(partial))
+#         # compute new weight vector
+#         w = w-(alpha*partial)
+#     return w
 
 ## below is a neural network implementation using logistic regression
 
@@ -95,7 +95,7 @@ def back_prop(nn, y):
         # if at the output layer, compute the first loss by iterating through nodes
         if i == len(nn)-1:
             for j in range(len(layer.nodes)):
-                diff.append((layer.nodes[j].out-y[j])**2)
+                diff.append((layer.nodes[j].out-y[j]))
         # otherwise, use the derivative of the layer in front for each node
         else:
             for j in range(len(layer.nodes)):
@@ -127,9 +127,9 @@ def update_w(nn, x, alpha):
         # update each node in current layer
         for node in layer.nodes:
             for j in range(len(ins)):
-                node.w[j] += (alpha*node.derivative*ins[j])
+                node.w[j] -= (alpha*node.derivative*ins[j])
             # update bias
-            node.w[-1] += (alpha*node.derivative)
+            node.w[-1] -= (alpha*node.derivative)
 
 # improved agent for colorization (currently using neural network)
 def improved_agent(img, alpha, epoch):
@@ -151,8 +151,8 @@ def improved_agent(img, alpha, epoch):
     # input: 1x9 vector
     # output: 1x3 vector
     nn = [None]*2
-    nn[0] = Layer(n=100,inn=9)
-    nn[1] = Layer(n=3,inn=100)
+    nn[0] = Layer(n=10,inn=9)
+    nn[1] = Layer(n=3,inn=10)
     for l in nn:
         for i in range(l.num_nodes):
             l.nodes[i] = Node(l.num_ins)
@@ -172,17 +172,17 @@ def improved_agent(img, alpha, epoch):
         actual = np.multiply(l_img[r][c],float(1/255))
         # get the predicted color from forward propogation
         pred_color = fwd_prop(nn, x)
-        sum_err = 0.0
-        sum_err += sum([(pred_color[i]-actual[i])**2 for i in range(len(actual))])
+        diff = (pred_color-actual)
+        diff = (np.dot(diff,diff))/3.0
         # update the weight vectors
         back_prop(nn, actual)
         update_w(nn, x, alpha)
-        if e % 100 == 0:
+        if e % 1000 == 0:
             print("epoch " + str(e))
             print("x: " + str(x))
             print("actual: " + str(actual) )
             print("pred: " + str(pred_color) )
-            print("error: " + str(sum_err))
+            print("error: " + str(diff))
 
 
     # TESTING - use the model to recolor image
@@ -204,3 +204,4 @@ def improved_agent(img, alpha, epoch):
     new_img = np.array(new_img).astype('uint8')
     axes[2].imshow(new_img)
     axes[2].set_title('Improved Agent')
+    return new_img
