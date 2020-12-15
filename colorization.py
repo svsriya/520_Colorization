@@ -52,7 +52,7 @@ def new_center(cluster):
     return center
 
 # returns the representative colors from the data
-def kmeans(k, left_img, x):
+def kmeans(k, left_img):
     width = len(left_img)
     length = len(left_img[0])
     centers = []
@@ -66,8 +66,11 @@ def kmeans(k, left_img, x):
         if not contains_p(centers, left_img[r][c]):
             centers.append(left_img[r][c])
 
+    diff = 100
+    j = 0
     # sorts pixels into clusters and recalibrates the centers
-    for j in range(x):
+    while diff != 0:
+        j+=1
         # separate pixels into clusters
         pixel_dict, clust_dict = sort_clusters(left_img, centers, pixel_dict, k)
         # for each cluster, compute a new center by averaging the points in the cluster
@@ -78,7 +81,8 @@ def kmeans(k, left_img, x):
             c_prime = new_center(clr)
             centers.append(c_prime)
         diff = np.absolute(np.subtract(old, centers))
-        print("Iteration: " + str(j) + " Sum of Center difference = " + str(np.sum(diff)))
+        diff = np.sum(diff)
+    print("Iterations for convergence: " + str(j))
 
     # return the k centers as the representative colors and the clusters
     return centers, pixel_dict
@@ -149,7 +153,7 @@ def recolor(img, rep_colors, dict):
     return np.array(temp)
 
 # basic agent for colorization
-def basic_agent(img, k, n, x):
+def basic_agent(img, k, n):
     print("Running basic agent...")
     f, axes = pyplot.subplots(1,3)
     # display the original image
@@ -163,7 +167,7 @@ def basic_agent(img, k, n, x):
     # TRAINING
     ## run k-means algo on left half of image to find the k best representative colors
     left_img, right_img = np.hsplit(img, 2)
-    rep_colors, pixel_dict = kmeans( k, left_img, x )
+    rep_colors, pixel_dict = kmeans( k, left_img)
 
     ## recolor the left half of the picture
     left_recolor = recolor(left_img, rep_colors, pixel_dict)
@@ -198,14 +202,22 @@ if __name__ == '__main__':
 
     while cmd is not "E":
         if cmd is "B":
-            k = int(input("Enter the number of representative colors: "))
-            n = int(input("Enter the number of nearest neighbors: "))
-            x = int(input("Enter number of iterations: "))
-            start = time.perf_counter()
-            b_img = basic_agent(img, k, n, x)
-            end = time.perf_counter()
-            print(f"Elapsed Time: {end - start:0.2f} seconds")
-            print("Average difference: " + str(an.pix_diff(img, b_img)))
+            ex = input("Vary representative colors? ")
+            if ex is "y":
+                n = int(input("Enter ending point from 1: "))
+                k = 5
+                for i in range(1,n):
+                    print("n = " + str(i))
+                    b_img = basic_agent(img, k, i)
+                    print("Average difference: " + str(an.pix_diff(img, b_img)))
+            else:
+                k = int(input("Enter the number of representative colors: "))
+                n = int(input("Enter the number of nearest neighbors: "))
+                start = time.perf_counter()
+                b_img = basic_agent(img, k, n)
+                end = time.perf_counter()
+                print(f"Elapsed Time: {end - start:0.2f} seconds")
+                print("Average difference: " + str(an.pix_diff(img, b_img)))
             pyplot.show()
         if cmd is "I":
             a = float(input("Enter a step size (alpha): "))

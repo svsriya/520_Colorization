@@ -6,8 +6,6 @@ from random import randint
 import numpy as np
 import math
 from matplotlib import pyplot
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import mean_squared_error, r2_score
 from neuralnet import Node, Layer
 ##################### Common Functions (between agents) ########################
 
@@ -17,44 +15,48 @@ def grayscale(img):
 
 ############################# Improved Agent ##################################
 
-# def grad_descent(data, actual, epoch, alpha, in_dim, out_dim):
-#     # initialize weight vector close to the zero vector (1x3)
-#     w = np.array([uniform(0,0.01) for _ in range(in_dim[1])])
-#     w[0] = w[0] * 5
-#     # run the training through the data set epoch number of times
-#     for _ in range(epoch):
-#         mid = int(in_dim[0]/2)
-#         # choose random index
-#         r = randint(mid, len(data)-mid-1)
-#         c = randint(mid, len(data[0])-mid-1)
-#         print("(r,c) = " + str((r,c)))
-#         print("w = " + str(w))
-#         # get the X matrix of gray values
-#         X = data[np.ix_(list(range(r-mid,r+mid+1)),list(range(c-mid,c+mid+1)))]
-#         # compute the predicted color for l_img[r][c]
-#         pred = np.matmul(w, X)
-#         act = actual[r][c]
-#         print("pred = " + str(pred))
-#         print("act = " + str(act))
-#         # compute the loss
-#         mse = ((pred-act)**2).mean(axis=0)
-#         print("MSE: " + str(mse))
-#         # compute the partial difference
-#         partial = 0
-#         for i in range(len(pred)):
-#             column = np.sum(X[:,i])
-#             partial += (column*(pred[i]-act[i]))
-#         partial *= (2/float(len(pred)))
-#         #print("Partial = " + str(partial))
-#         # compute new weight vector
-#         w = w-(alpha*partial)
-#     return w
+## used in linear regression
+def grad_descent(data, actual, epoch, alpha, in_dim, out_dim):
+    # initialize weight vector close to the zero vector (1x3)
+    w = np.array([uniform(0,0.01) for _ in range(in_dim[1])])
+    w[0] = w[0] * 5
+    # run the training through the data set epoch number of times
+    for _ in range(epoch):
+        mid = int(in_dim[0]/2)
+        # choose random index
+        r = randint(mid, len(data)-mid-1)
+        c = randint(mid, len(data[0])-mid-1)
+        print("(r,c) = " + str((r,c)))
+        print("w = " + str(w))
+        # get the X matrix of gray values
+        X = data[np.ix_(list(range(r-mid,r+mid+1)),list(range(c-mid,c+mid+1)))]
+        # compute the predicted color for l_img[r][c]
+        pred = np.matmul(w, X)
+        act = actual[r][c]
+        print("pred = " + str(pred))
+        print("act = " + str(act))
+        # compute the loss
+        mse = ((pred-act)**2).mean(axis=0)
+        print("MSE: " + str(mse))
+        # compute the partial difference
+        partial = 0
+        for i in range(len(pred)):
+            column = np.sum(X[:,i])
+            partial += (column*(pred[i]-act[i]))
+        partial *= (2/float(len(pred)))
+        #print("Partial = " + str(partial))
+        # compute new weight vector
+        w = w-(alpha*partial)
+    return w
+
+## below is a neural network implementation using logistic regression
 
 # gets weight vector and input data
 def sigmoid(w, x):
     # dot sum the vectors
-    #print("w = " + str(w))
-    sum = np.dot(w,x)
+    # first add the bias term
+    sum = w[-1]
+    sum += np.dot(w[:-1],x)
     # compute the sigmoid value
     sig = 1.0 + math.exp(-sum)
     return (1.0/sig)
@@ -72,7 +74,7 @@ def fwd_prop(nn, x):
         for node in l.nodes:
             node.out = sigmoid( node.w, prev_out )
             ins.append(node.out)
-        ins.append(1)
+        #ins.append(1)
         # set the previous layer's output as the current layer's input
         prev_out = ins
     # should return output of 1x3 vector
@@ -93,7 +95,7 @@ def back_prop(nn, y):
         # if at the output layer, compute the first loss by iterating through nodes
         if i == len(nn)-1:
             for j in range(len(layer.nodes)):
-                diff.append(layer.nodes[j].out-y[j])
+                diff.append((layer.nodes[j].out-y[j])**2)
         # otherwise, use the derivative of the layer in front for each node
         else:
             for j in range(len(layer.nodes)):
@@ -129,7 +131,7 @@ def update_w(nn, x, alpha):
             # update bias
             node.w[-1] += (alpha*node.derivative)
 
-# improved agent for colorization
+# improved agent for colorization (currently using neural network)
 def improved_agent(img, alpha, epoch):
     print("Running improved agent...")
     f, axes = pyplot.subplots(1,3)
@@ -149,54 +151,56 @@ def improved_agent(img, alpha, epoch):
     # input: 1x9 vector
     # output: 1x3 vector
     nn = [None]*2
-    nn[0] = Layer(3,10)
-    nn[1] = Layer(3,4)
+    nn[0] = Layer(n=100,inn=9)
+    nn[1] = Layer(n=3,inn=100)
     for l in nn:
         for i in range(l.num_nodes):
             l.nodes[i] = Node(l.num_ins)
 
     ## TRAINING - using SGD
-    for _ in range(epoch):
+    for e in range(epoch):
         # choose random data point
         r = randint(1, len(l_gr)-2)
         c = randint(1, len(l_gr[0])-2)
         # 1x9 vector
         x = l_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
         x = x.flatten()
-        x = np.append(x,1)
+        x = np.multiply(x,float(1/255))
+        #x = np.append(x,1)
         #print("x: " + str(x))
         # actual color
         actual = np.multiply(l_img[r][c],float(1/255))
         # get the predicted color from forward propogation
         pred_color = fwd_prop(nn, x)
-        print("actual: " + str(actual) )
-        print("pred: " + str(pred_color) )
         sum_err = 0.0
         sum_err += sum([(pred_color[i]-actual[i])**2 for i in range(len(actual))])
         # update the weight vectors
         back_prop(nn, actual)
         update_w(nn, x, alpha)
-        print("error: " + str(sum_err))
+        if e % 100 == 0:
+            print("epoch " + str(e))
+            print("x: " + str(x))
+            print("actual: " + str(actual) )
+            print("pred: " + str(pred_color) )
+            print("error: " + str(sum_err))
 
 
     # TESTING - use the model to recolor image
     new_img = []
-    for r in range(1,len(r_gr)-1):
+    for r in range(len(r_gr)):
         new_img.append([])
-        for c in range(1, len(r_gr[0])-1):
+        for c in range(len(r_gr[0])):
+            if r == 0 or r == len(r_gr)-1 or c == 0 or c == len(r_gr[0])-1:
+                new_img[r].append([0,0,0])
+                continue
             x = r_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
             x = x.flatten()
-            x = np.append(x,1)
+            x = np.multiply(x,float(1/255))
+            #x = np.append(x,1)
             # compute the predicted color for l_img[r][c]
             color = fwd_prop(nn, x)
             # set the color
-            new_img[r-1].append((np.multiply(color[:-1],225)))
-    #print(new_img)
+            new_img[r].append((np.multiply(color,225)))
     new_img = np.array(new_img).astype('uint8')
     axes[2].imshow(new_img)
     axes[2].set_title('Improved Agent')
-
-# if __name__ == '__main__':
-#     actual = np.array([[[2]],[[4]]])
-#     data = np.array([[1],[2]])
-#     w = grad_descent(data,actual,6,0.5,(1,1),(1,1))

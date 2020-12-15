@@ -10,7 +10,7 @@ class Node:
     # derivative computed during backpropogation
     derivative = 0.0
     def __init__(self, num_weights):
-        self.w = [random.random() for _ in range(num_weights)]
+        self.w = [random.random() for _ in range(num_weights+1)]
 
 # represents a layer
 class Layer:
