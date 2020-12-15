@@ -56,7 +56,8 @@ def sigmoid(w, x):
     # dot sum the vectors
     # first add the bias term
     sum = w[-1]
-    sum += np.dot(w[:-1],x)
+    for i in range(len(x)):
+        sum += (w[i]*x[i])
     # compute the sigmoid value
     sig = 1.0 + math.exp(-sum)
     return (1.0/sig)
@@ -151,8 +152,9 @@ def improved_agent(img, alpha, epoch):
     # input: 1x9 vector
     # output: 1x3 vector
     nn = [None]*2
-    nn[0] = Layer(n=10,inn=9)
-    nn[1] = Layer(n=3,inn=10)
+    nn[0] = Layer(n=50,inn=9)
+    nn[1] = Layer(n=3,inn=50)
+    # nn[2] = Layer(n=3, inn=10)
     for l in nn:
         for i in range(l.num_nodes):
             l.nodes[i] = Node(l.num_ins)
@@ -163,9 +165,9 @@ def improved_agent(img, alpha, epoch):
         r = randint(1, len(l_gr)-2)
         c = randint(1, len(l_gr[0])-2)
         # 1x9 vector
-        x = l_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
-        x = x.flatten()
-        x = np.multiply(x,float(1/255))
+        x_mat = l_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
+        x_flat = x_mat.flatten()
+        x = np.multiply(x_flat,float(1/255))
         #x = np.append(x,1)
         #print("x: " + str(x))
         # actual color
@@ -173,16 +175,19 @@ def improved_agent(img, alpha, epoch):
         # get the predicted color from forward propogation
         pred_color = fwd_prop(nn, x)
         diff = (pred_color-actual)
-        diff = (np.dot(diff,diff))/3.0
+        err = 0.0
+        for i in range(len(diff)):
+            err += (diff[i]**2)
+        err /= 3.0
         # update the weight vectors
         back_prop(nn, actual)
         update_w(nn, x, alpha)
         if e % 1000 == 0:
-            print("epoch " + str(e))
+            print("step " + str(e))
             print("x: " + str(x))
             print("actual: " + str(actual) )
             print("pred: " + str(pred_color) )
-            print("error: " + str(diff))
+            print("error: " + str(err))
 
 
     # TESTING - use the model to recolor image
@@ -193,9 +198,9 @@ def improved_agent(img, alpha, epoch):
             if r == 0 or r == len(r_gr)-1 or c == 0 or c == len(r_gr[0])-1:
                 new_img[r].append([0,0,0])
                 continue
-            x = r_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
-            x = x.flatten()
-            x = np.multiply(x,float(1/255))
+            x_mat = r_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
+            x_flat = x_mat.flatten()
+            x = np.multiply(x_flat,float(1/255))
             #x = np.append(x,1)
             # compute the predicted color for l_img[r][c]
             color = fwd_prop(nn, x)

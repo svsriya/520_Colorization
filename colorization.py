@@ -143,12 +143,12 @@ def nearest_neighbor(tr, ts, n, pixel_dict, num_colors):
 
 # recolors the given image with the representative colors, using the color
 # specified in dict for each pixel
-def recolor(img, rep_colors, dict):
+def recolor(img, rep_colors, d):
     # iterate through the pixels and recolor based on rep color
     temp = [[0 for i in range(len(img[0]))] for j in range(len(img))]
     for r in range(len(img)):
         for c in range(len(img[0])):
-            color = rep_colors[dict[(r,c)]]
+            color = rep_colors[d[(r,c)]]
             temp[r][c] = np.array(color)
     return np.array(temp)
 
@@ -197,7 +197,8 @@ def basic_agent(img, k, n):
 if __name__ == '__main__':
     # loads image as a pixel array
     pic_path = input("Enter the path to the picture: ")
-    img = image.imread(pic_path)
+    og_img = image.imread(pic_path)
+    img = og_img.copy()
     cmd = input("Enter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(C)ompare both\n(E)xit\n")
 
     while cmd is not "E":
@@ -210,7 +211,7 @@ if __name__ == '__main__':
                     print("n = " + str(i))
                     b_img = basic_agent(img, k, i)
                     # compare with just the right half
-                    _, right_img = np.hsplit(img, 2)
+                    _, right_img = np.hsplit(og_img, 2)
                     _, right_new = np.hsplit(b_img, 2)
                     print("Mean square error: " + str(an.pix_diff(right_img, right_new)))
             else:
@@ -221,7 +222,7 @@ if __name__ == '__main__':
                 end = time.perf_counter()
                 print(f"Elapsed Time: {end - start:0.2f} seconds")
                 # compare with just the right half
-                _, right_img = np.hsplit(img, 2)
+                _, right_img = np.hsplit(og_img, 2)
                 _, right_new = np.hsplit(b_img, 2)
                 print("Mean square error: " + str(an.pix_diff(right_img, right_new)))
             pyplot.show()
@@ -232,7 +233,8 @@ if __name__ == '__main__':
             i_img = improved_agent(img, a, e)
             end = time.perf_counter()
             print(f"Elapsed Time: {end - start:0.2f} seconds")
-            print("Mean square error: " + str(an.pix_diff(img, i_img)))
+            _, right_img = np.hsplit(og_img, 2)
+            print("Mean square error: " + str(an.pix_diff(right_img, i_img)))
             pyplot.show()
 
         cmd = input("\nEnter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(C)ompare both\n(E)xit\n")
