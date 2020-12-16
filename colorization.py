@@ -153,6 +153,9 @@ def recolor(img, rep_colors, d):
     return np.array(temp)
 
 # basic agent for colorization
+# img: the original image vector
+# k: the number of clusters and representative to choose
+# n: the number of nearest neighbors chosen when running the nearest_neighbor algorithm
 def basic_agent(img, k, n):
     print("Running basic agent...")
     f, axes = pyplot.subplots(1,3)
@@ -199,17 +202,17 @@ if __name__ == '__main__':
     pic_path = input("Enter the path to the picture: ")
     og_img = image.imread(pic_path)
     img = og_img.copy()
-    cmd = input("Enter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(C)ompare both\n(E)xit\n")
+    cmd = input("Enter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(E)xit\n")
 
     while cmd is not "E":
         if cmd is "B":
             ex = input("Vary representative colors? ")
             if ex is "y":
-                n = int(input("Enter ending point from 1: "))
-                k = 5
-                for i in range(1,n):
+                k = int(input("Enter ending point from 5: "))
+                n = 5
+                for i in range(5,k+3,3):
                     print("n = " + str(i))
-                    b_img = basic_agent(img, k, i)
+                    b_img = basic_agent(img, i, n)
                     # compare with just the right half
                     _, right_img = np.hsplit(og_img, 2)
                     _, right_new = np.hsplit(b_img, 2)
@@ -225,7 +228,7 @@ if __name__ == '__main__':
                 _, right_img = np.hsplit(og_img, 2)
                 _, right_new = np.hsplit(b_img, 2)
                 print("Mean square error: " + str(an.pix_diff(right_img, right_new)))
-            pyplot.show()
+                pyplot.show()
         if cmd is "I":
             a = float(input("Enter a step size (alpha): "))
             e = int(input("Enter the number of times to go through training data (epoch): "))
@@ -237,4 +240,4 @@ if __name__ == '__main__':
             print("Mean square error: " + str(an.pix_diff(right_img, i_img)))
             pyplot.show()
 
-        cmd = input("\nEnter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(C)ompare both\n(E)xit\n")
+        cmd = input("\nEnter a letter corresponding to a command:\n(B)asic Agent\n(I)mproved Agent\n(E)xit\n")

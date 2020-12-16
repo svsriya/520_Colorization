@@ -135,7 +135,7 @@ def update_w(nn, x, alpha):
 # improved agent for colorization (currently using neural network)
 def improved_agent(img, alpha, epoch):
     print("Running improved agent...")
-    f, axes = pyplot.subplots(1,3)
+    f, axes = pyplot.subplots(1,4)
     # display the original image
     axes[0].imshow(img)
     axes[0].set_title('Original Image')
@@ -152,8 +152,8 @@ def improved_agent(img, alpha, epoch):
     # input: 1x9 vector
     # output: 1x3 vector
     nn = [None]*2
-    nn[0] = Layer(n=50,inn=9)
-    nn[1] = Layer(n=3,inn=50)
+    nn[0] = Layer(n=20,inn=9)
+    nn[1] = Layer(n=3,inn=20)
     # nn[2] = Layer(n=3, inn=10)
     for l in nn:
         for i in range(l.num_nodes):
@@ -174,7 +174,7 @@ def improved_agent(img, alpha, epoch):
         actual = np.multiply(l_img[r][c],float(1/255))
         # get the predicted color from forward propogation
         pred_color = fwd_prop(nn, x)
-        diff = (pred_color-actual)
+        diff = [float(pred_color[0])-float(actual[0]), float(pred_color[1])-float(actual[1]), float(pred_color[2])-float(actual[2])]
         err = 0.0
         for i in range(len(diff)):
             err += (diff[i]**2)
@@ -184,21 +184,21 @@ def improved_agent(img, alpha, epoch):
         update_w(nn, x, alpha)
         if e % 1000 == 0:
             print("step " + str(e))
-            print("x: " + str(x))
-            print("actual: " + str(actual) )
-            print("pred: " + str(pred_color) )
+            # print("x: " + str(x))
+            # print("actual: " + str(actual) )
+            # print("pred: " + str(pred_color) )
             print("error: " + str(err))
 
 
     # TESTING - use the model to recolor image
     new_img = []
-    for r in range(len(r_gr)):
+    for r in range(len(gray_img)):
         new_img.append([])
-        for c in range(len(r_gr[0])):
-            if r == 0 or r == len(r_gr)-1 or c == 0 or c == len(r_gr[0])-1:
+        for c in range(len(gray_img[0])):
+            if r == 0 or r == len(gray_img)-1 or c == 0 or c == len(gray_img[0])-1:
                 new_img[r].append([0,0,0])
                 continue
-            x_mat = r_gr[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
+            x_mat = gray_img[np.ix_(list(range(r-1,r+2)),list(range(c-1,c+2)))]
             x_flat = x_mat.flatten()
             x = np.multiply(x_flat,float(1/255))
             #x = np.append(x,1)
@@ -207,6 +207,9 @@ def improved_agent(img, alpha, epoch):
             # set the color
             new_img[r].append((np.multiply(color,225)))
     new_img = np.array(new_img).astype('uint8')
+    _, right = np.hsplit(new_img, 2)
     axes[2].imshow(new_img)
     axes[2].set_title('Improved Agent')
-    return new_img
+    axes[3].imshow(right)
+    axes[3].set_title('Right half')
+    return right
