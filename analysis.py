@@ -16,5 +16,5 @@ def pix_diff(og_img, new_img):
             nw = new_img[r][c]
             diff = [int(og[0])-int(nw[0]), int(og[1])-int(nw[1]), int(og[2])-int(nw[2])]
             for i in range(len(diff)):
-                vect_sum += (diff[i]**2)
+                vect_sum += int(diff[i]**2)
     return float(vect_sum/(len(new_img)*len(new_img[0])))
